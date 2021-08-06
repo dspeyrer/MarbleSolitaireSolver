@@ -74,7 +74,13 @@ class Board {
 public:
     Board(board_state state);
     void log();
+
+    // Recursively solve the board and add the found solutions to the output vector, 
+    // and keep track of the current stack and the recursed level
     void solve(vector<solution> &output, solution stack, int search_level);
+
+    // Attempts to modify the board state to reflect the move passed in. If successful, will return true
+    // and modify the board; otherwise, will return false.
     bool make_move(Move &mov);
 private:
     board_state state;
@@ -107,13 +113,13 @@ void Board::log() {
     }
 }
 
-// Attempts to modify the board state to reflect the move passed in. If successful, will return 
 bool Board::make_move(Move &m0) {
     Move m1 = m0.increment_direction();
     Move m2 = m1.increment_direction();
 
     bool oob = false;
 
+    // This will make sure that no out of bounds locations will be accessed
     switch (m0.dir) {
     case Up:
         oob = m2.x < 0;
@@ -150,8 +156,6 @@ bool Board::make_move(Move &m0) {
     return true;
 }
 
-// Recursively solve the board and add the found solutions to the output vector, 
-// and keep track of the current stack and the recursed level
 void Board::solve(vector<solution>& output, solution stack, int search_level) {
     searched_amount++;
     cout << searched_amount;
