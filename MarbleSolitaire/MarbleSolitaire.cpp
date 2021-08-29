@@ -8,19 +8,17 @@ using namespace std;
 
 // Dimensions of the board
 const int BOARD_SIZE = 7;
-// Number of moves required to solve
-const int MOVE_COUNT = 35;
 
 typedef int board_state[BOARD_SIZE][BOARD_SIZE];
 
 board_state initial_data = {
-    { -1,-1, 1, 1, 1,-1,-1 },
-    { -1, 1, 1, 1, 1, 1,-1 },
-    {  1, 1, 1, 1, 1, 1, 1 },
-    {  1, 1, 1, 0, 1, 1, 1 },
-    {  1, 1, 1, 1, 1, 1, 1 },
-    { -1, 1, 1, 1, 1, 1,-1 },
-    { -1,-1, 1, 1, 1,-1,-1 }
+    {-1,-1, 1, 1, 1,-1,-1},
+    {-1, 1, 1, 1, 1, 1,-1},
+    { 1, 1, 1, 1, 1, 1, 1},
+    { 1, 1, 1, 0, 1, 1, 1},
+    { 1, 1, 1, 1, 1, 1, 1},
+    {-1, 1, 1, 1, 1, 1,-1},
+    {-1,-1, 1, 1, 1,-1,-1}
 };
 
 enum Dir { Up, Down, Left, Right };
@@ -61,10 +59,11 @@ Move Move::increment_direction() {
     return m;
 };
 
-typedef array<Move, MOVE_COUNT> solution;
+typedef vector<Move> solution;
 
 
-int searched_amount = 0;
+UINT64 searched_amount = 0;
+int max_search = 0;
 
 
 
@@ -77,7 +76,7 @@ public:
 
     // Recursively solve the board and add the found solutions to the output vector, 
     // and keep track of the current stack and the recursed level
-    void solve(vector<solution> &output, solution stack, int search_level);
+    void solve(vector<solution> &output, solution &stack);
 
     // Attempts to modify the board state to reflect the move passed in. If successful, will return true
     // and modify the board; otherwise, will return false.
@@ -156,29 +155,35 @@ bool Board::make_move(Move &m0) {
     return true;
 }
 
-void Board::solve(vector<solution>& output, solution stack, int search_level) {
+void Board::solve(vector<solution>& output, solution &stack) {
     searched_amount++;
-    cout << searched_amount;
+
+    if (stack.size() > max_search) {
+        max_search = stack.size();
+    }
+
     cout << "\r";
 
+    cout << " | currently searching at : ";
+    cout << stack.size();
 
-    // Once we have recursed 35 moves, it means that the current move stack is a valid solution,
-    // because each move must eliminate a marble from the board, and there are 36 marbles.
-    if (search_level == MOVE_COUNT) {
-        output.push_back(stack);
-        cout << "\nFound solution: [\n";
-        for (int i = 0; i < MOVE_COUNT; i++) {
-            cout << static_cast<string>(stack[i]);
-            cout << "\n";
-        }
-        cout << "]\n";
-        return;
-    }
+    cout << " | total searched amount: ";
+    cout << searched_amount;
+
+    cout << " | farthest search at: ";
+    cout << max_search;
+
+    cout << " |";
+
+
+
+    int counter = 0;
 
     for (int x = 0; x < BOARD_SIZE; x++) {
         for (int y = 0; y < BOARD_SIZE; y++) {
             // Iterate over all marbles in the board in order to look for valid moves
             if (state[x][y] == 1) {
+                counter++;
                 // Look in all directions for a valid move
                 for (int dirInt = Up; dirInt < 4; dirInt++) {
                     Dir dir = static_cast<Dir>(dirInt);
@@ -193,14 +198,24 @@ void Board::solve(vector<solution>& output, solution stack, int search_level) {
                     // Try to make the move on the board. make_move will return true if the move successfully
                     // completed, and if it did, then recurse
                     if (m.make_move(mov)) {
-                        // Because the stack is passed by value, when trying different move origins 
-                        // and directions in the same search level, overwrite the current stack before passing it down
-                        stack[search_level] = mov;
-                        m.solve(output, stack, search_level + 1);
+                        solution newStack = stack;
+
+                        newStack.push_back(mov);
+                        m.solve(output, newStack);
                     }
                 }
             }
         }
+    }
+
+    if (counter == 1) {
+        output.push_back(stack);
+        cout << "\n\nFound solution: [\n";
+        for (int i = 0; i < stack.size(); i++) {
+            cout << static_cast<string>(stack[i]);
+            cout << "\n";
+        }
+        cout << "]\n";
     }
 }
 
@@ -210,10 +225,9 @@ int main()
     info.dwSize = 100;
     info.bVisible = false;
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
-
+    
     Board initial_state(initial_data);
     solution stack = {};
     vector<solution> solutions = {};
-    initial_state.solve(solutions, stack, 0);
-    cout << solutions.size();
+    initial_state.solve(solutions, stack);
 }
