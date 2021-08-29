@@ -11,6 +11,11 @@ const int BOARD_SIZE = 7;
 
 typedef int board_state[BOARD_SIZE][BOARD_SIZE];
 
+// Board state data
+// -1: Out of bounds
+//  0: Empty
+//  1: Marble
+
 board_state initial_data = {
     {-1,-1, 1, 1, 1,-1,-1},
     {-1, 1, 1, 1, 1, 1,-1},
@@ -28,6 +33,7 @@ struct Move {
     int y;
     Dir dir;
 
+    // Format a move to be printed to the console
     explicit operator string() {
         return to_string(y) + string(", ") + to_string(x) + string(" ") + string(dir == Up ? "\x1e" : dir == Right ? "\x10" : dir == Down ? "\x1f" : "\x11");
     }
@@ -61,17 +67,16 @@ Move Move::increment_direction() {
 
 typedef vector<Move> solution;
 
-
+// Debug variables
 UINT64 searched_amount = 0;
 int max_search = 0;
-
-
-
 
 // Defines a board state with functions 
 class Board {
 public:
     Board(board_state state);
+
+    // Log a board state to the console
     void log();
 
     // Recursively solve the board and add the found solutions to the output vector, 
@@ -82,6 +87,7 @@ public:
     // and modify the board; otherwise, will return false.
     bool make_move(Move &mov);
 private:
+    // The current state of the board
     board_state state;
 };
 
@@ -156,6 +162,8 @@ bool Board::make_move(Move &m0) {
 }
 
 void Board::solve(vector<solution>& output, solution &stack) {
+
+    // Debug info
     searched_amount++;
 
     if (stack.size() > max_search) {
@@ -176,8 +184,9 @@ void Board::solve(vector<solution>& output, solution &stack) {
     cout << " |";
 
 
-
+    // Keep track of how many marbles are found on the board
     int counter = 0;
+
 
     for (int x = 0; x < BOARD_SIZE; x++) {
         for (int y = 0; y < BOARD_SIZE; y++) {
@@ -198,9 +207,11 @@ void Board::solve(vector<solution>& output, solution &stack) {
                     // Try to make the move on the board. make_move will return true if the move successfully
                     // completed, and if it did, then recurse
                     if (m.make_move(mov)) {
+                        // Copy the current stack and add the intented move
                         solution newStack = stack;
-
                         newStack.push_back(mov);
+
+                        // Recurse
                         m.solve(output, newStack);
                     }
                 }
@@ -208,6 +219,7 @@ void Board::solve(vector<solution>& output, solution &stack) {
         }
     }
 
+    // If there's only one marble left then the current board state must be a solution
     if (counter == 1) {
         output.push_back(stack);
         cout << "\n\nFound solution: [\n";
@@ -221,11 +233,13 @@ void Board::solve(vector<solution>& output, solution &stack) {
 
 int main()
 {
+    // Hide console cursor
     CONSOLE_CURSOR_INFO info;
     info.dwSize = 100;
     info.bVisible = false;
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
     
+
     Board initial_state(initial_data);
     solution stack = {};
     vector<solution> solutions = {};
